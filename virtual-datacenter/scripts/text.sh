@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 colony_title() {
   echo -e "$YELLOW
    _____           _

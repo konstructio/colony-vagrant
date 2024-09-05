@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 execute_command() {
   local command=$1
   local autoApprove=$2
@@ -5,24 +7,25 @@ execute_command() {
   echo -e "${YELLOW}$command ${NOCOLOR}"
 
   if [ -n "$autoApprove" ]; then
-       if [ -n "$command" ]; then
-          eval $command
-      fi
+    if [ -n "$command" ]; then
+      eval "$command"
+    fi
   else
-       if [ -n "$command" ]; then
-              echo -e "${BLUE}Do you want to execute the command?${NOCOLOR}"
-              choice=$(gum choose "Yes" "No")
-              if [ "$choice" = "Yes" ]; then
-                  eval $command
-              fi
-       fi
+    if [ -n "$command" ]; then
+      echo -e "${BLUE}Do you want to execute the command?${NOCOLOR}"
+      choice=$(gum choose "Yes" "No")
+      if [ "$choice" = "Yes" ]; then
+        eval "$command"
+      fi
+    fi
   fi
 }
 
 ask_skip_data_collection() {
   echo -e "${GREEN}Do you want to skip filling in data? (yes/no)${NOCOLOR}"
   trap "echo 'Script terminado por el usuario'; exit 1" TSTP
-  local response=$(choose_option "yes" "yes" "no")
+  local response
+  response=$(choose_option "yes" "yes" "no")
   if [[ "$response" == "no" ]]; then
     return 1
   else
@@ -60,7 +63,8 @@ echo 'watch kubectl get workflow'; \
 echo '------------------------------------'; \
 "
 
-  local sshCommand=$(civo_get_ssh_command)
+  local sshCommand
+  sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
 
@@ -79,42 +83,47 @@ vagrant ssh laptop; exec /bin/bash -i'"
 }
 
 access_ssh() {
-  local command=$(civo_get_ssh_command)
+  local command
+  command=$(civo_get_ssh_command)
   execute_command "$command"
 }
 
 access_ssh_laptop() {
-  local command=$(civo_get_ssh_command)
+  local command
+  command=$(civo_get_ssh_command)
   command="$command -tt 'cd colony/vagrant-dc; vagrant ssh laptop; exec /bin/bash -i'"
 
   execute_command "$command"
 }
 
 delete_laptop() {
-  local command=$(civo_get_ssh_command)
+  local command
+  command=$(civo_get_ssh_command)
   echo -e "${YELLOW}Please delete all records related with this laptop, after to destroy this one.${NOCOLOR}"
   command="$command -tt 'cd colony/vagrant-dc; vagrant destroy laptop -f; exit;'"
-
   execute_command "$command"
 }
 
 get_ssh_config() {
-  local publicIp=$(civo_get_public_ip)
+  local publicIp
+  publicIp=$(civo_get_public_ip)
   echo -e "${YELLOW}Copying the private key from laptop to your local machine${NOCOLOR}"
   echo -e "${YELLOW} $publicIp ${NOCOLOR}"
-  scp root@$publicIp:/root/colony/vagrant-dc/.vagrant/machines/laptop/libvirt/private_key ~/private_key_laptop
+  scp "root@$publicIp:/root/colony/vagrant-dc/.vagrant/machines/laptop/libvirt/private_key" ~/private_key_laptop
   chmod 600 ~/private_key_laptop
   echo -e "${GREEN}The private key has been copied to your local machine ~/private_key_laptop${NOCOLOR}"
 
   # get ip of laptop inside the vagrant network
-  local command=$(civo_get_ssh_command)
+  local command
+  command=$(civo_get_ssh_command)
   echo -e "${YELLOW}Getting IP from laptop.${NOCOLOR}"
 
-  local laptopIP=$(ssh -i ~/.ssh/id_ed25519 root@$publicIp -tt "cd colony/vagrant-dc; vagrant ssh laptop -c 'hostname -I | awk \"{print \\\$1}\"'")
+  local laptopIP
+  laptopIP=$(ssh -i ~/.ssh/id_ed25519 "root@${publicIp}" -tt "cd colony/vagrant-dc; vagrant ssh laptop -c 'hostname -I | awk \"{print \\\$1}\"'")
 
   echo -e "${GREEN}The IP of laptop is $laptopIP${NOCOLOR}"
 
-  update_ssh_config $publicIp $laptopIP
+  update_ssh_config "$publicIp" "$laptopIP"
 }
 
 update_ssh_config() {
@@ -124,7 +133,8 @@ update_ssh_config() {
 
   mkdir -p ~/.ssh
 
-  local tmp_file=$(mktemp)
+  local tmp_file
+  tmp_file=$(mktemp)
 
   awk '
     BEGIN {in_civo_colony=0; in_colony_laptop=0}
@@ -132,7 +142,7 @@ update_ssh_config() {
     /^Host colony-laptop/ {in_colony_laptop=1; next}
     /^Host / {in_civo_colony=0; in_colony_laptop=0}
     !in_civo_colony && !in_colony_laptop {print}
-  ' "$ssh_config_file" > "$tmp_file"
+  ' "$ssh_config_file" >"$tmp_file"
 
   {
     echo ""
@@ -147,7 +157,7 @@ update_ssh_config() {
     echo "  User vagrant"
     echo "  ForwardAgent yes"
     echo "  IdentityFile ~/private_key_laptop"
-  } >> "$tmp_file"
+  } >>"$tmp_file"
 
   mv "$tmp_file" "$ssh_config_file"
 
@@ -156,11 +166,13 @@ update_ssh_config() {
 
 check_vagrant_status() {
   echo "Checking Vagrant status..."
-  local sshCommand=$(civo_get_ssh_command)
+  local sshCommand
+  sshCommand=$(civo_get_ssh_command)
 
   # Loop until Vagrant is installed and running
   while true; do
     $sshCommand -o BatchMode=yes -tt "command -v vagrant >/dev/null 2>&1 && vagrant global-status"
+    # shellcheck disable=SC2181
     if [ $? -eq 0 ]; then
       echo "Vagrant is running."
       break
@@ -173,11 +185,13 @@ check_vagrant_status() {
 
 check_cloud_init_status() {
   echo "Checking cloud-init status..."
-  local sshCommand=$(civo_get_ssh_command)
+  local sshCommand
+  sshCommand=$(civo_get_ssh_command)
 
   # Loop until cloud-init is finished
   while true; do
     $sshCommand -o BatchMode=yes -tt "sudo cloud-init status --wait"
+    # shellcheck disable=SC2181
     if [ $? -eq 0 ]; then
       echo "Cloud-init is finished."
       break
@@ -191,6 +205,8 @@ check_cloud_init_status() {
 unblock_local_ssh() {
   echo -e "${YELLOW}Unblocking local SSH${NOCOLOR}"
   eval "$(ssh-agent -s)"
-  local SELECTED_KEY_PRIVATE=$(echo $SELECTED_KEY | sed 's/\.pub//')
-  ssh-add $SELECTED_KEY_PRIVATE
+  local selectedKeyPrivate
+  # shellcheck disable=SC2001
+  selectedKeyPrivate=$(echo "$SELECTED_KEY" | sed 's/\.pub//')
+  ssh-add "$selectedKeyPrivate"
 }

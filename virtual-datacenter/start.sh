@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
+# shellcheck disable=SC1091
 source ./scripts/colors.sh
 source ./scripts/requirements.sh
 source ./scripts/functions.sh
@@ -19,19 +20,19 @@ if [ $? -ne 0 ]; then
     clear
 else
     if ! ask_skip_data_collection; then
-      collect_user_data
-      save_collected_data
-      clear
+        collect_user_data
+        save_collected_data
+        clear
     fi
 fi
 
 main() {
-  civo_setup
-  while true; do
-    echo -e "\n${GREEN}Select some action:${NOCOLOR}\n"
-    ACTION=$(gum choose "create datacenter" "destroy datacenter" "ssh datacenter-vm" "ssh laptop" "show config" "get ssh config" "exit") 
+    civo_setup
+    while true; do
+        echo -e "\n${GREEN}Select some action:${NOCOLOR}\n"
+        ACTION=$(gum choose "create datacenter" "destroy datacenter" "ssh datacenter-vm" "ssh laptop" "show config" "get ssh config" "exit")
 
-    case $ACTION in
+        case $ACTION in
         "create datacenter")
             create_ssh_key
             unblock_local_ssh
@@ -62,8 +63,8 @@ main() {
             echo "Option not found: $ACTION, bye..."
             exit 1
             ;;
-    esac
-  done
+        esac
+    done
 }
 
 main
