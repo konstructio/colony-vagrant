@@ -1,0 +1,12 @@
+config.ssh.username = "vagrant"
+config.ssh.shell  = "/"
+config.ssh.keys_only = true
+config.ssh.insert_key = false
+config.vm.synced_folder ".", "/vagrant", disabled: true
+config.vm.allow_fstab_modification = false
+config.vm.allow_hosts_modification = false
+config.ssh.sudo_command = "%c"
+
+config.vm.provider :libvirt do |lv|
+  lv.disk_bus = "ide"
+end
