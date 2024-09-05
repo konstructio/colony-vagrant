@@ -1,0 +1,19 @@
+hegel:
+  trustedProxies:
+  - 10.42.0.0/24
+smee:
+  image: public.ecr.aws/kubefirst/smee:9371956
+  trustedProxies:
+  - 10.42.0.0/24
+  publicIP: 10.0.10.2
+  tftp:
+    timeout: 120s
+  additionalArgs:
+    - -dhcp-auto-discovery=true
+    - -dhcp-mode=proxy
+stack:
+  kubevip:
+    interface: eth1
+  loadBalancerIP: 10.0.10.2
+  relay:
+    sourceInterface: eth1

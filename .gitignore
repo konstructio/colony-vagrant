@@ -1,0 +1,5 @@
+.vagrant
+mikrotik/*.box
+mikrotik/*.img
+mikrotik/*.qcow2
+mikrotik/create_box.sh
