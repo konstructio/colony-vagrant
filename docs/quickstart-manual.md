@@ -2,7 +2,7 @@
 
 ## Step 1 - create the data center
 
-```sh {"id":"01J34TVHHB1FEHRVG6PDZ2RV34"}
+```sh
 # visit this link for your `civo-internal` account token https://dashboard.civo.com/security
 ## verify KUBEFIRST_TEAM_INFO is set in your shell or set it below
 ## verify CIVO_TOKEN is set in your shell or set it below
@@ -27,14 +27,14 @@ civo instance create \
 
 ## Step 2 - connect to the data center
 
-```sh {"id":"01J34TVHHB1FEHRVG6PHJRAMBA"}
+```sh
 # ssh onto new vm
 ssh -i $PATH_TO_SSH_PRIVATE_KEY root@$CIVO_INSTANCE_PUBLIC_IP
 ```
 
 ## Step 3 - clone the private colony repository to the data center
 
-```sh {"id":"01J34TVHHB1FEHRVG6PMQXBZ74"}
+```sh
 git clone https://github.com/konstructio/colony
 # enter github username
 # enter github PAT
@@ -45,7 +45,7 @@ git clone https://github.com/konstructio/colony
 *note: the user data script is running as soon as the vm is provisioned*
 *and might take a minute before `vagrant` is available to run*
 
-```sh {"id":"01J34TVHHB1FEHRVG6PPKDRRMK"}
+```sh
 cd /root/colony/vagrant-dc/
 vagrant plugin install vagrant-libvirt
 
@@ -56,7 +56,7 @@ vagrant up spine01 leaf01 exit laptop
 
 first connect to laptop from the data center vm
 
-```sh {"id":"01J34TVHHB1FEHRVG6PQD7RPK8"}
+```sh
 vagrant ssh laptop
 ```
 
@@ -64,7 +64,7 @@ vagrant ssh laptop
 
 :sunflower: improve the runlist: https://github.com/konstructio/colony/issues/84
 
-```sh {"id":"01J34TVHHB1FEHRVG6PQJX14YD"}
+```sh
 echo "alias k=kubectl" >> ~/.bashrc
 source ~/.bashrc
 sudo snap install --classic kubectx
@@ -85,7 +85,7 @@ download-ubuntu-jammy-xll2j       0/1     Completed   0          88s
 
 ### Step 6 - run colony init to get templates, secret and helm chart installation
 
-```bash {"id":"01J34TVHHB1FEHRVG6PSH4TKFE"}
+```bash
 cd /home/vagrant/colony
 sudo go build -o /usr/bin/colony .
 export COLONY_API_KEY=<REPLACE WITH YOUR KEY FROM COLONY UI FROM https://colony-ui.mgmt-24.konstruct.io>
@@ -97,27 +97,27 @@ go run . init
 
 ### Step 7 - override tinkerbell stack with our fork images
 
-```bash {"id":"01J34TVHHB1FEHRVG6PXDG7QY3"}
+```bash
 # proxy mode
 /home/vagrant/manifests/helm-upgrade.sh /home/vagrant/manifests/proxy-values.yaml
 ```
 
 ### Step 8 - verify colony pods are healthy
 
-```sh {"id":"01J34TVHHB1FEHRVG6PY6660MR"}
+```sh
 kubens tink-system
 kubectl get pods
 ```
 
 if all pods are healthy, you can run exit to return to the datacenter vm
 
-```text {"id":"01J34TVHHB1FEHRVG6PZFJA6V5"}
+```text
 exit
 ```
 
 ### Step 9 - power on machine1 and autodiscover
 
-```sh {"id":"01J34TVHHB1FEHRVG6Q0QS1GC3"}
+```sh
 # from datacenter vm
 cd /root/colony/
 
@@ -144,7 +144,7 @@ open a new isolated terminal on your laptop
 
 replace the values for the below two export commands, and run this to open a tunnel
 
-```sh {"id":"01J34TVHHB1FEHRVG6Q2997ZKG"}
+```sh
 export DC_VM_IP=212.2.243.92 # get this value from civo console
 export MACHINE_PORT=5905 # get this value from vagrant up output. look for `==> machine1:  -- Graphics Port:`
 ssh -i ~/.ssh/id_ed25519 root@${DC_VM_IP} -L ${MACHINE_PORT}:127.0.0.1:${MACHINE_PORT}
@@ -152,7 +152,7 @@ ssh -i ~/.ssh/id_ed25519 root@${DC_VM_IP} -L ${MACHINE_PORT}:127.0.0.1:${MACHINE
 
 then go to another terminal and run
 
-```sh {"id":"01J34TVHHB1FEHRVG6Q6916QGX"}
+```sh
 export MACHINE_PORT=5901
 open vnc://127.0.0.1:$MACHINE_PORT
 ```
