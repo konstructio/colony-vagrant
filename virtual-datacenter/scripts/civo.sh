@@ -8,7 +8,7 @@ create_datacenter() {
     --size g4s.2xlarge \
     --sshkey $KUBEFIRST_TEAM_INFO \
     --diskimage ubuntu-jammy \
-    --script ${DIR}/cloud-init/cloud-init \
+    --script ${DIR}/cloud-init \
     --initialuser root colony-$KUBEFIRST_TEAM_INFO \
     --hostname colony-$KUBEFIRST_TEAM_INFO \
     --wait \
