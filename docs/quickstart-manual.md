@@ -87,12 +87,11 @@ download-ubuntu-jammy-xll2j       0/1     Completed   0          88s
 
 ```bash
 cd /home/vagrant/colony
-sudo go build -o /usr/bin/colony .
 export COLONY_API_KEY=<REPLACE WITH YOUR KEY FROM COLONY UI FROM https://colony-ui.mgmt-24.konstruct.io>
 
 kubectl -n tink-system create secret generic laptop-kubeconfig  --from-file=kubeconfig=$HOME/.kube/config
 
-go run . init
+colony init
 ```
 
 ### Step 7 - override tinkerbell stack with our fork images
@@ -120,8 +119,6 @@ exit
 ```sh
 # from datacenter vm
 cd /root/colony/
-
-sudo go build -o /usr/bin/colony .
 
 cd vagrant-dc
 
