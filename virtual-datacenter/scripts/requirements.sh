@@ -77,7 +77,8 @@ recover_vars() {
   fi
 
   if [ -z "$COLONY_CLI_VERSION" ]; then
-    COLONY_CLI_VERSION="v0.0.4" # pinned to version 0.0.4
+    echo "COLONY_CLI_VERSION is not defined. Get a version from https://github.com/konstructio/colony/releases"
+    return 1
   fi
 
   if [ -z "$CIVO_REGION" ]; then
