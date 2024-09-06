@@ -23,7 +23,7 @@ echo $COLONY_API_KEY
 
 colony init \
   --apiKey="$COLONY_API_KEY" \
-  --url="https://colony-api-virtual.konstruct.io"
+  --apiURL="https://colony-api-virtual.konstruct.io"
 
 exit
 ```
