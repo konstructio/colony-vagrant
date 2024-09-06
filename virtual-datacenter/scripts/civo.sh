@@ -1,10 +1,14 @@
+#!/usr/bin/env bash
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 create_datacenter() {
   echo -e "${GREEN}Datacenter creation started${NOCOLOR}"
   civo instance create \
     --size g4s.2xlarge \
     --sshkey $KUBEFIRST_TEAM_INFO \
     --diskimage ubuntu-jammy \
-    --script ../../scripts/cloud-init \
+    --script ${DIR}/cloud-init/cloud-init \
     --initialuser root colony-$KUBEFIRST_TEAM_INFO \
     --hostname colony-$KUBEFIRST_TEAM_INFO \
     --wait \
