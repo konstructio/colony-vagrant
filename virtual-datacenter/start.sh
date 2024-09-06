@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 
-# shellcheck disable=SC1091
-source ./scripts/colors.sh
-source ./scripts/requirements.sh
-source ./scripts/functions.sh
-source ./scripts/text.sh
-source ./scripts/civo.sh
+# Get directory relative to this script
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
+source "${DIR}/scripts/colors.sh"
+source "${DIR}/scripts/requirements.sh"
+source "${DIR}/scripts/functions.sh"
+source "${DIR}/scripts/text.sh"
+source "${DIR}/scripts/civo.sh"
 
 install_gum
 install_jq
