@@ -30,9 +30,12 @@ if [[ $? -ne 0 ]]; then
 fi
 echo "User current directory: $user_original_dir"
 
+# Get the current directory based on the current file
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
 # Change to the desired directory
-cd /root/colony-vagrant/virtual-datacenter || {
-  echo "Error changing to /root/colony-vagrant/virtual-datacenter."
+cd "${DIR}/../" || {
+  echo "Error changing to ${DIR}/../"
   exit 1
 }
 

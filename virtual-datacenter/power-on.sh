@@ -28,6 +28,9 @@ run_and_sleep() {
 # Main logic
 echo "Starting power-on process..."
 
+# Get the current directory based on the current file
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+
 # Store the original directory
 user_original_dir=$(pwd)
 if [[ $? -ne 0 ]]; then
@@ -37,8 +40,8 @@ fi
 echo "User current directory: $user_original_dir"
 
 # Change to the desired directory
-cd /root/colony-vagrant/virtual-datacenter || {
-  echo "Error changing to /root/colony-vagrant/virtual-datacenter."
+cd "${DIR}/../" || {
+  echo "Error changing to ${DIR}/../"
   exit 1
 }
 
