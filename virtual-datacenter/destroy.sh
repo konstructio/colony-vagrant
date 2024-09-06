@@ -31,8 +31,8 @@ fi
 echo "User current directory: $user_original_dir"
 
 # Change to the desired directory
-cd /root/colony/vagrant-dc || {
-  echo "Error changing to /root/colony/vagrant-dc."
+cd /root/colony-vagrant/virtual-datacenter || {
+  echo "Error changing to /root/colony-vagrant/virtual-datacenter."
   exit 1
 }
 
