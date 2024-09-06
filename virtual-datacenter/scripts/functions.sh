@@ -43,11 +43,11 @@ until [ \\\"\\\$(snap changes | grep -e \\\"Done.*Initialize system state\\\" | 
 echo 'snapd is ready.'; \
 sudo snap install --classic kubectx; \
 kubens tink-system; \
-sudo kubectl -n tink-system create secret generic laptop-kubeconfig --from-file=kubeconfig=\$HOME/.kube/config; \
+sudo kubectl -n tink-system create secret generic mgmt-kubeconfig --from-file=kubeconfig=\$HOME/.kube/config; \
 curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
 export COLONY_API_KEY=$COLONY_API_KEY; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
-sudo kubectl -n tink-system get secret laptop-kubeconfig; \
+sudo kubectl -n tink-system get secret mgmt-kubeconfig; \
 /home/vagrant/manifests/helm-upgrade.sh /home/vagrant/manifests/proxy-values.yaml; \
 echo '------------------------------------'; \
 echo 'kubens tink-system'; \
