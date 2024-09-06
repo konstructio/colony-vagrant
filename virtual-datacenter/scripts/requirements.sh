@@ -77,7 +77,7 @@ recover_vars() {
   fi
 
   if [ -z "$COLONY_CLI_VERSION" ]; then
-    COLONY_CLI_VERSION="v0.0.3" # pinned to version 0.0.3
+    COLONY_CLI_VERSION="v0.0.4" # pinned to version 0.0.4
   fi
 
   if [ -z "$CIVO_REGION" ]; then

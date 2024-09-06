@@ -21,7 +21,9 @@ When the process finish, you will be logged in your laptop automatically you can
 ```bash
 echo $COLONY_API_KEY
 
-colony init
+colony init \
+  --apiKey="$COLONY_API_KEY" \
+  --apiURL="https://colony-api-virtual.konstruct.io"
 
 exit
 ```
@@ -29,7 +31,7 @@ exit
 ## power on six machines from the data center instance
 
 ```sh
-colony power-on
+bash virtual-datacenter/power-on.sh
 
 exit
 
@@ -82,7 +84,7 @@ cluster creation complete!
 ![civostack cluster create complete](../docs/images/6-civostack-cluster-create-complete.png)
 
 ```sh
-colony destroy-machines
+bash virtual-datacenter/destroy.sh
 
 vagrant ssh laptop
 
