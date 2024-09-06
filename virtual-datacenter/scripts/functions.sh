@@ -69,7 +69,8 @@ vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-
 curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
-cd vagrant-dc; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \
+git clone git@github.com:konstructio/colony-vagrant.git colony-vagrant; \
+cd colony-vagrant; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \
 vagrant ssh laptop; exec /bin/bash -i'"
 
   execute_command "$fullCommand" "autoApprove"
