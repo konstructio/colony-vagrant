@@ -92,7 +92,7 @@ check_civo_status() {
 create_ssh_key() {
   echo -e "${GREEN}Creating SSH key${NOCOLOR}"
 
-  if civo sshkey find "${KUBEFIRST_TEAM_INFO}"; then
+  if ! civo sshkey find "${KUBEFIRST_TEAM_INFO}"; then
     civo sshkey create "${KUBEFIRST_TEAM_INFO}" --key "$SELECTED_KEY"
     echo -e "${GREEN}SSH key created${NOCOLOR}"
   fi
