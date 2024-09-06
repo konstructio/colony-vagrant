@@ -35,8 +35,6 @@ ask_skip_data_collection() {
 
 setup_vagrant() {
   local vagrantCommand="echo \\\"alias k=kubectl\\\" >> ~/.bashrc; \
-echo \\\"export GITHUB_USER='$GITHUB_USER'\\\" >> ~/.bashrc; \
-echo \\\"export GITHUB_TOKEN='$GITHUB_TOKEN'\\\" >> ~/.bashrc; \
 echo \\\"export COLONY_API_KEY=$COLONY_API_KEY\\\" >> ~/.bashrc; \
 source ~/.bashrc; \
 until systemctl is-active --quiet snapd.service; do sleep 1; done; \
@@ -44,14 +42,11 @@ echo 'snapd.service is active and working.'; \
 until [ \\\"\\\$(snap changes | grep -e \\\"Done.*Initialize system state\\\" | wc -l)\\\" -gt 0 ]; do echo 'Waiting for snapd to be ready...'; sleep 5; done; \
 echo 'snapd is ready.'; \
 sudo snap install --classic kubectx; \
-sudo snap install --classic go; \
 kubens tink-system; \
 sudo kubectl -n tink-system create secret generic laptop-kubeconfig --from-file=kubeconfig=\$HOME/.kube/config; \
-git clone -b $COLONY_BRANCH https://$GITHUB_USER:$GITHUB_TOKEN@github.com/konstructio/colony; \
-cd colony; \
+curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
 export COLONY_API_KEY=$COLONY_API_KEY; \
-go build -o colony .; \
-sudo mv ./colony /usr/local/bin/; \
+sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo kubectl -n tink-system get secret laptop-kubeconfig; \
 /home/vagrant/manifests/helm-upgrade.sh /home/vagrant/manifests/proxy-values.yaml; \
 echo '------------------------------------'; \
@@ -71,10 +66,8 @@ echo '------------------------------------'; \
   local fullCommand="$sshCommand -tt 'export GITHUB_USER=\"$GITHUB_USER\"; \
 export GITHUB_TOKEN=\"$GITHUB_TOKEN\"; \
 vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-libvirt; \
-git clone -b $COLONY_BRANCH https://$GITHUB_USER:$GITHUB_TOKEN@github.com/konstructio/colony; \
-cd colony; \
-go build -o colony .; \
-sudo mv ./colony /usr/local/bin/; \
+curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
+sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
 cd vagrant-dc; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \
 vagrant ssh laptop; exec /bin/bash -i'"

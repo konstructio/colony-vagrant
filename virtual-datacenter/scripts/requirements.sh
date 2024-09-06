@@ -75,40 +75,38 @@ recover_vars() {
     echo "KUBEFIRST_TEAM_INFO is not defined"
     return 1
   fi
+
+  if [ -z "$COLONY_CLI_VERSION" ]; then
+    COLONY_CLI_VERSION="v0.0.3" # pinned to version 0.0.3
+  fi
+
   if [ -z "$CIVO_REGION" ]; then
     echo "CIVO_REGION is not defined"
     return 1
   fi
+
   if [ -z "$TF_VAR_civo_token" ]; then
     echo "TF_VAR_civo_token is not defined"
     return 1
   fi
+
   if [ -z "$SELECTED_KEY" ]; then
     echo "SELECTED_KEY is not defined"
     return 1
   fi
+
   if [ -z "$TF_VAR_ssh_key_pub" ]; then
     echo "TF_VAR_ssh_key_pub is not defined"
     return 1
   fi
+
   if [ -z "$TF_VAR_civo_region" ]; then
     echo "TF_VAR_civo_region is not defined"
     return 1
   fi
-  if [ -z "$GITHUB_USER" ]; then
-    echo "GITHUB_USER is not defined"
-    return 1
-  fi
-  if [ -z "$GITHUB_TOKEN" ]; then
-    echo "GITHUB_TOKEN is not defined"
-    return 1
-  fi
+
   if [ -z "$COLONY_API_KEY" ]; then
     echo "COLONY_API_KEY is not defined"
-    return 1
-  fi
-  if [ -z "$COLONY_BRANCH" ]; then
-    echo "COLONY_BRANCH is not defined"
     return 1
   fi
 }
@@ -154,10 +152,8 @@ show_config() {
     echo -e "${GREEN}SELECTED_KEY ${NOCOLOR} $SELECTED_KEY"
     echo -e "${GREEN}TF_VAR_civo_region ${NOCOLOR} $CIVO_REGION"
     echo -e "${GREEN}INSTANCE_NAME ${NOCOLOR} colony-$KUBEFIRST_TEAM_INFO"
-    echo -e "${GREEN}GITHUB_USER ${NOCOLOR} $GITHUB_USER"
-    echo -e "${GREEN}GITHUB_TOKEN ${NOCOLOR} $GITHUB_TOKEN"
     echo -e "${GREEN}COLONY_API_KEY ${NOCOLOR} $COLONY_API_KEY"
-    echo -e "${GREEN}COLONY_BRANCH ${NOCOLOR} $COLONY_BRANCH"
+    echo -e "${GREEN}COLONY_CLI_VERSION ${NOCOLOR} $COLONY_CLI_VERSION"
     return 0
   elif [[ "$response" == "no" ]]; then
     echo -e "${GREEN}KUBEFIRST_TEAM_INFO:${NOCOLOR} $KUBEFIRST_TEAM_INFO"
@@ -166,10 +162,8 @@ show_config() {
     echo -e "${GREEN}TF_VAR_ssh_key_pub ${NOCOLOR} $TF_VAR_ssh_key_pub"
     echo -e "${GREEN}TF_VAR_civo_region ${NOCOLOR} $CIVO_REGION"
     echo -e "${GREEN}INSTANCE_NAME ${NOCOLOR} colony-$KUBEFIRST_TEAM_INFO"
-    echo -e "${GREEN}GITHUB_USER ${NOCOLOR} $GITHUB_USER"
-    echo -e "${GREEN}GITHUB_TOKEN ${NOCOLOR} ************"
     echo -e "${GREEN}COLONY_API_KEY ${NOCOLOR}  ************"
-    echo -e "${GREEN}COLONY_BRANCH ${NOCOLOR} $COLONY_BRANCH"
+    echo -e "${GREEN}COLONY_CLI_VERSION ${NOCOLOR} $COLONY_CLI_VERSION"
     return 0
   else
     show_vars
@@ -193,14 +187,6 @@ collect_user_data() {
   export TF_VAR_ssh_key_pub=$(cat "$SELECTED_KEY")
   export SELECTED_KEY=$SELECTED_KEY
 
-  echo -e "${GREEN}Please enter your GitHub user${NOCOLOR} (default:$GREEN $GITHUB_USER $NOCOLOR)"
-  # shellcheck disable=SC2155
-  export GITHUB_USER=$(capture_input "put your GitHub user" "$GITHUB_USER" false)
-
-  echo -e "${GREEN}Please enter your GitHub token${NOCOLOR} (default:$GREEN ********** $NOCOLOR)"
-  # shellcheck disable=SC2155
-  export GITHUB_TOKEN=$(capture_input "put your GitHub token" "$GITHUB_TOKEN" true)
-
   echo -e "${GREEN}Please enter your KUBEFIRST_TEAM_INFO${NOCOLOR} (default:$GREEN $KUBEFIRST_TEAM_INFO $NOCOLOR)"
   # shellcheck disable=SC2155
   export KUBEFIRST_TEAM_INFO=$(capture_input "put your KUBEFIRST_TEAM_INFO" "$KUBEFIRST_TEAM_INFO" false)
@@ -209,9 +195,9 @@ collect_user_data() {
   # shellcheck disable=SC2155
   export COLONY_API_KEY=$(capture_input "put your COLONY_API_KEY" "$COLONY_API_KEY" true)
 
-  echo -e "${GREEN}Please enter your COLONY_BRANCH${NOCOLOR} (default:$GREEN $COLONY_BRANCH $NOCOLOR)"
+  echo -e "${GREEN}Please enter your COLONY_CLI_VERSION${NOCOLOR} (default:$GREEN $COLONY_CLI_VERSION $NOCOLOR)"
   # shellcheck disable=SC2155
-  export COLONY_BRANCH=$(capture_input "put your COLONY_BRANCH" "$COLONY_BRANCH" false)
+  export COLONY_CLI_VERSION=$(capture_input "put your COLONY_CLI_VERSION" "$COLONY_CLI_VERSION" false)
 }
 
 save_collected_data() {
@@ -222,9 +208,7 @@ save_collected_data() {
     echo "TF_VAR_ssh_key_pub:$TF_VAR_ssh_key_pub"
     echo "SELECTED_KEY:$SELECTED_KEY"
     echo "TF_VAR_civo_region:$CIVO_REGION"
-    echo "GITHUB_USER:$GITHUB_USER"
-    echo "GITHUB_TOKEN:$GITHUB_TOKEN"
     echo "COLONY_API_KEY:$COLONY_API_KEY"
-    echo "COLONY_BRANCH:$COLONY_BRANCH"
+    echo "COLONY_CLI_VERSION:$COLONY_CLI_VERSION"
   } >data.txt
 }
