@@ -14,8 +14,6 @@ scp root@<CIVO_MACHINE_PUBLIC_IP>:/root/colony/vagrant/.vagrant/machines/laptop/
 ```bash
 ssh -i $YOUR_SSH_KEY_PATH root@<CIVO_MACHINE_PUBLIC_IP>
 
-cd colony/vagrant-dc
-
 vagrant ssh-config laptop
 
 > You should see something like this:

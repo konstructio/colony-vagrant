@@ -2,14 +2,6 @@
 
 This allows you to reach step 8 in a single command after providing the required inputs.
 
-## Prerequisites
-
-```bash
-brew install gum
-brew install go
-go install github.com/mitchellh/gox@latest
-```
-
 ## Provision your vagrant data center on a Civo compute instance
 
 ```bash
