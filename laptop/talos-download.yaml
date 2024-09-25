@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: download-talos-files
+data:
+  entrypoint.sh: |-
+    #!/usr/bin/env bash
+    # This script is designed to download specific Talos files required for an IPXE script to work.
+    set -euxo pipefail
+    if ! which wget &>/dev/null; then
+      apk add --update wget
+    fi
+    base_url=$1
+    output_dir=$2
+    files=("initramfs-amd64.xz" "vmlinuz-amd64")
+    for file in "${files[@]}"; do
+      wget "${base_url}/${file}" -O "${output_dir}/${file}"
+    done
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: download-talos-files
+spec:
+  template:
+    spec:
+      containers:
+        - name: download-talos-files
+          image: bash:5.2.2
+          command: ["/script/entrypoint.sh"]
+          args:
+            [
+              "https://github.com/siderolabs/talos/releases/download/v1.8.0",
+              "/output",
+            ]
+          volumeMounts:
+            - mountPath: /output
+              name: hook-artifacts
+            - mountPath: /script
+              name: configmap-volume
+      restartPolicy: OnFailure
+      volumes:
+        - name: hook-artifacts
+          hostPath:
+            path: /opt/hook
+            type: DirectoryOrCreate
+        - name: configmap-volume
+          configMap:
+            defaultMode: 0700
+            name: download-talos-files

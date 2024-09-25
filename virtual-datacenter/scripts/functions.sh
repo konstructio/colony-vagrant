@@ -83,7 +83,7 @@ access_ssh() {
 access_ssh_laptop() {
   local command
   command=$(civo_get_ssh_command)
-  command="$command -tt 'cd colony/vagrant-dc; vagrant ssh laptop; exec /bin/bash -i'"
+  command="$command -tt 'cd colony/vagrant; vagrant ssh laptop; exec /bin/bash -i'"
   execute_command "$command"
 }
 
@@ -91,7 +91,7 @@ delete_laptop() {
   local command
   command=$(civo_get_ssh_command)
   echo -e "${YELLOW}Please delete all records related with this laptop, after to destroy this one.${NOCOLOR}"
-  command="$command -tt 'cd colony/vagrant-dc; vagrant destroy laptop -f; exit;'"
+  command="$command -tt 'cd colony/vagrant; vagrant destroy laptop -f; exit;'"
   execute_command "$command"
 }
 
@@ -100,7 +100,7 @@ get_ssh_config() {
   publicIp=$(civo_get_public_ip)
   echo -e "${YELLOW}Copying the private key from laptop to your local machine${NOCOLOR}"
   echo -e "${YELLOW} $publicIp ${NOCOLOR}"
-  scp "root@$publicIp:/root/colony/vagrant-dc/.vagrant/machines/laptop/libvirt/private_key" ~/private_key_laptop
+  scp "root@$publicIp:/root/colony-vagrant/.vagrant/machines/laptop/libvirt/private_key" ~/private_key_laptop
   chmod 600 ~/private_key_laptop
   echo -e "${GREEN}The private key has been copied to your local machine ~/private_key_laptop${NOCOLOR}"
 
@@ -110,7 +110,7 @@ get_ssh_config() {
   echo -e "${YELLOW}Getting IP from laptop.${NOCOLOR}"
 
   local laptopIP
-  laptopIP=$(ssh -i ~/.ssh/id_ed25519 "root@${publicIp}" -tt "cd colony/vagrant-dc; vagrant ssh laptop -c 'hostname -I | awk \"{print \\\$1}\"'")
+  laptopIP=$(ssh -i ~/.ssh/id_ed25519 "root@${publicIp}" -tt "cd /root/colony-vagrant; vagrant ssh laptop -c 'hostname -I | awk \"{print \\\$1}\"'")
 
   echo -e "${GREEN}The IP of laptop is $laptopIP${NOCOLOR}"
 
