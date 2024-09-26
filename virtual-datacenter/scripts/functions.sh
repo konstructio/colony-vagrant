@@ -83,7 +83,7 @@ access_ssh() {
 access_ssh_laptop() {
   local command
   command=$(civo_get_ssh_command)
-  command="$command -tt 'cd colony/vagrant; vagrant ssh laptop; exec /bin/bash -i'"
+  command="$command -tt 'cd colony-vagrant; vagrant ssh laptop; exec /bin/bash -i'"
   execute_command "$command"
 }
 
