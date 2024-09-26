@@ -120,6 +120,7 @@ apply_manifests() {
 	local namespace=$2
 
 	kubectl apply -n "$namespace" -f "$manifests_dir"/ubuntu-download.yaml
+	kubectl apply -n "$namespace" -f "$manifests_dir"/talos-download.yaml
 }
 
 run_helm() {
