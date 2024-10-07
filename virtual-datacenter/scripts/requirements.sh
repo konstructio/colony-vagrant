@@ -64,7 +64,7 @@ get_latest_colony_cli_version() {
 
 recover_vars() {
   if [ ! -f data.txt ]; then
-    echo -e "${YELLOW}You have not any data file yet.${NOCOLOR}"
+    echo -e "${YELLOW}You don't have any preexistent configuration file yet.${NOCOLOR}"
     return 1
   fi
   while IFS=':' read -r key value; do
