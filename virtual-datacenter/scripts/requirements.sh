@@ -56,6 +56,12 @@ civo_setup() {
   civo region use "$TF_VAR_civo_region"
 }
 
+get_latest_colony_cli_version() {
+  # Fetch the latest tag from GitHub API
+  LATEST_TAG=$(curl -s https://api.github.com/repos/konstructio/colony/releases/latest | jq -r '.tag_name')
+  echo "$LATEST_TAG"
+}
+
 recover_vars() {
   if [ ! -f data.txt ]; then
     echo -e "${YELLOW}You have not any data file yet.${NOCOLOR}"
@@ -77,8 +83,14 @@ recover_vars() {
   fi
 
   if [ -z "$COLONY_CLI_VERSION" ]; then
-    echo "COLONY_CLI_VERSION is not defined. Get a version from https://github.com/konstructio/colony/releases"
-    return 1
+    echo "COLONY_CLI_VERSION is not defined. Fetching latest version..."
+    COLONY_CLI_VERSION=$(get_latest_colony_cli_version)
+    if [ -z "$COLONY_CLI_VERSION" ]; then
+      echo "Failed to fetch latest COLONY_CLI_VERSION"
+      return 1
+    else
+      echo "COLONY_CLI_VERSION set to $COLONY_CLI_VERSION"
+    fi
   fi
 
   if [ -z "$CIVO_REGION" ]; then
@@ -172,6 +184,10 @@ show_config() {
 }
 
 collect_user_data() {
+  if [ -z "$COLONY_CLI_VERSION" ]; then
+    COLONY_CLI_VERSION=$(get_latest_colony_cli_version)
+  fi
+
   echo -e "${GREEN}Select the region where you want to deploy the VM${NOCOLOR} (default:$GREEN $CIVO_REGION $NOCOLOR)"
   CIVO_REGION=$(choose_option "$CIVO_REGION" "nyc1" "lon1" "fra1" "sfo1" "mia1" "syd1")
   export CIVO_REGION
