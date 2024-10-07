@@ -88,7 +88,6 @@ access_ssh_laptop() {
 }
 
 delete_laptop() {
-  local command
   command=$(civo_get_ssh_command)
   echo -e "${YELLOW}Please delete all records related with this laptop, after to destroy this one.${NOCOLOR}"
   command="$command -tt 'cd colony/vagrant; vagrant destroy laptop -f; exit;'"
