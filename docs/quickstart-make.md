@@ -31,7 +31,7 @@ exit
 ## power on six machines from the data center instance
 
 ```sh
-bash colony-vagrant/virtual-datacenter/power-on.sh
+bash /root/colony-vagrant/virtual-datacenter/power-on.sh
 
 exit
 
@@ -84,7 +84,7 @@ cluster creation complete!
 ![civostack cluster create complete](../docs/images/6-civostack-cluster-create-complete.png)
 
 ```sh
-bash colony-vagrant/virtual-datacenter/destroy.sh
+bash /root/colony-vagrant/virtual-datacenter/destroy.sh
 
 vagrant ssh laptop
 
