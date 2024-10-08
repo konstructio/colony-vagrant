@@ -68,15 +68,13 @@ start_k3s() {
 	mkdir -p ~/.kube/
 
 	cp ./kubeconfig.yaml ~/.kube/config || echo "Failed to get kubeconfig"
-	sed -i 's/127.0.0.1/localhost/g' ~/.kube/config
 	export KUBECONFIG=~/.kube/config
-	cat ~/.kube/config
 
 	if [ -f ./kubeconfig.yaml ]; then
     cp ./kubeconfig.yaml ~/.kube/config
 	else
-			echo "Failed to get kubeconfig: kubeconfig.yaml not found"
-			exit 1
+    echo "Failed to get kubeconfig: kubeconfig.yaml not found"
+    exit 1
 	fi
 
 	echo "Checking nodes..."
