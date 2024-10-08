@@ -68,6 +68,16 @@ start_k3s() {
 	mkdir -p ~/.kube/
 
 	cp ./kubeconfig.yaml ~/.kube/config || echo "Failed to get kubeconfig"
+	sed -i 's/127.0.0.1/localhost/g' ~/.kube/config
+	export KUBECONFIG=~/.kube/config
+	cat ~/.kube/config
+
+	if [ -f ./kubeconfig.yaml ]; then
+    cp ./kubeconfig.yaml ~/.kube/config
+	else
+			echo "Failed to get kubeconfig: kubeconfig.yaml not found"
+			exit 1
+	fi
 
 	echo "Checking nodes..."
 	until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do
@@ -75,16 +85,21 @@ start_k3s() {
 		sleep 5
 	done
 
-	# Generating a join token and storing it in a secret
-	docker exec -it ctrlplane-laptop k3s token create --print-join-command >token.txt
+	echo "Generating join token and storing it in a secret..."
+	# docker exec -i ctrlplane-laptop k3s token create --print-join-command > token.txt (incompatible)
+	docker exec -i ctrlplane-laptop cat /var/lib/rancher/k3s/server/node-token > token.txt
 	kubectl create secret -n kube-system generic k3s-join-token --from-file=token.txt
 }
 
 kubectl_for_vagrant_user() {
-	runuser -l vagrant -c "mkdir -p ~/.kube/"
-	runuser -l vagrant -c "k3d kubeconfig get -a > ~/.kube/config"
+	echo "**********************************"
+	runuser -l vagrant -c "mkdir -p /home/vagrant/.kube"
+	cp ./kubeconfig.yaml /home/vagrant/.kube/config
+	chown vagrant:vagrant /home/vagrant/.kube/config
+
 	chmod 600 /home/vagrant/.kube/config
-	echo 'export KUBECONFIG="/home/vagrant/.kube/config"' >>/home/vagrant/.bashrc
+	echo 'export KUBECONFIG="/home/vagrant/.kube/config"' >> /home/vagrant/.bashrc
+	echo "**********************************"
 }
 
 helm_install_tink_stack() {
