@@ -3,9 +3,22 @@
 prepare_system() {
   apt update
   apt install curl gnupg lsb-release software-properties-common -y
+  apt install iproute2 -y
+  apt install ethtool -y
 
   if ! command -v sudo &>/dev/null; then
     apt install sudo -y
+  fi
+}
+
+disable_network_offloads() {
+  local interface=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -n 1)
+  if [[ -n "$interface" ]]; then
+    echo "Disabling tx, sg, tso off for interface $interface"
+    sudo ethtool -K "$interface" tx off sg off tso off
+  else
+    echo "No active network interface found."
+    exit 1
   fi
 }
 
@@ -115,6 +128,7 @@ helm_install_tink_stack() {
 	local version=$2
 	local interface=$3
 	local loadbalancer_ip=$4
+	local manifests_dir=$5
 
 	trusted_proxies=""
 	until [ "$trusted_proxies" != "" ]; do
@@ -128,7 +142,7 @@ helm_install_tink_stack() {
 		--set "smee.trustedProxies=${trusted_proxies}" \
 		--set "hegel.trustedProxies=${trusted_proxies}" \
 		--set "stack.kubevip.interface=${interface}" \
-		--values manifests/proxy-values.yaml \
+		--values ${manifests_dir}/proxy-values.yaml \
 		--set "stack.loadBalancerIP=${loadbalancer_ip}" \
 		--set "smee.publicIP=${loadbalancer_ip}"
 }
@@ -165,7 +179,7 @@ run_helm() {
 	install_helm
 	kubectl get all --all-namespaces
 	kubectl_for_user "$user"
-	helm_install_tink_stack "$namespace" "$helm_chart_version" "$loadbalancer_interface" "$loadbalancer_ip"
+	helm_install_tink_stack "$namespace" "$helm_chart_version" "$loadbalancer_interface" "$loadbalancer_ip" "$manifests_dir"
 	apply_manifests "$manifests_dir" "$namespace"
 }
 
@@ -180,6 +194,8 @@ main() {
 	local k3s_version="v1.30.2-k3s1"
 
 	update_apt
+	prepare_system
+	# disable_network_offloads
 
 	local user="vagrant"
 	if [[ "$is_physical" == "true" ]]; then
@@ -187,8 +203,8 @@ main() {
 	fi
 
 	install_docker "$user"
-	configure_dnsmasq
-	sudo ethtool -K eth1 tx off sg off tso off
+	# configure_dnsmasq
+	# sudo ethtool -K eth1 tx off sg off tso off
 	install_kubectl "$kubectl_version"
 	run_helm "$manifests_dir" "$loadbalancer_ip" "$helm_chart_version" "$loadbalancer_interface" "$k3s_version" "$user"
 }
