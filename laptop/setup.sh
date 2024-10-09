@@ -189,9 +189,13 @@ main() {
 	local is_physical="$3"
 	# https://github.com/tinkerbell/charts/pkgs/container/charts%2Fstack
 	local helm_chart_version="0.4.4"
-	local loadbalancer_interface="eth1"
 	local kubectl_version="1.28.3"
 	local k3s_version="v1.30.2-k3s1"
+
+  local loadbalancer_interface="eth1"
+  if [[ -n "$4" ]]; then
+    loadbalancer_interface="$4"
+  fi
 
 	update_apt
 	prepare_system
@@ -216,3 +220,13 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
 	echo loadbalancer_ip="$1"
 	echo "all done!"
 fi
+
+# kubectl config set-context --current --namespace=tink-system
+# alias k='kubectl'
+
+# INTERFACE: nsenter -t1 -n ip route | awk '/default/ {print $5}' | head -n1
+# IP_LOAD_BALANCER: nsenter -t1 -n ip -4 addr show <INTERFACE> | awk '/inet / {print $2}' | cut -d/ -f1
+
+#             loadBalancerIP     | folder_manifests | is_physical | loadbalancer_interface
+# ./setup.sh "<IP_LOAD_BALANCER>"        "."             true         <INTERFACE>
+# ./setup.sh "192.168.1.5" "." true enp1s0

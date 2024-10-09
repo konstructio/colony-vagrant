@@ -40,7 +40,7 @@ main() {
             unblock_local_ssh
             create_datacenter
             wait_for_civo_status
-            setup_vagrant
+#            setup_vagrant
             ;;
         "destroy datacenter")
             civo_destroy
