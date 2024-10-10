@@ -1,11 +1,33 @@
 #!/bin/bash
 
+prepare_system() {
+  apt update
+  apt install curl gnupg lsb-release software-properties-common -y
+  apt install iproute2 -y
+  apt install ethtool -y
+
+  if ! command -v sudo &>/dev/null; then
+    apt install sudo -y
+  fi
+}
+
+disable_network_offloads() {
+  local interface=$(ip -o link show | awk -F': ' '{print $2}' | grep -v lo | head -n 1)
+  if [[ -n "$interface" ]]; then
+    echo "Disabling tx, sg, tso off for interface $interface"
+    sudo ethtool -K "$interface" tx off sg off tso off
+  else
+    echo "No active network interface found."
+    exit 1
+  fi
+}
+
 install_docker() {
 	curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 	add-apt-repository "deb https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
 	update_apt
 	apt-get install --no-install-recommends containerd.io docker-ce docker-ce-cli dnsmasq
-	gpasswd -a vagrant docker
+	gpasswd -a "$1" docker
 }
 
 install_kubectx_kubens() {
@@ -89,14 +111,15 @@ start_k3s() {
 	kubectl create secret -n kube-system generic k3s-join-token --from-file=token.txt
 }
 
-kubectl_for_vagrant_user() {
+kubectl_for_user() {
+	local user=$1
 	echo "**********************************"
-	runuser -l vagrant -c "mkdir -p /home/vagrant/.kube"
-	cp ./kubeconfig.yaml /home/vagrant/.kube/config
-	chown vagrant:vagrant /home/vagrant/.kube/config
+	runuser -l "$user" -c "mkdir -p /home/$user/.kube"
+	cp ./kubeconfig.yaml /home/"$user"/.kube/config
+	chown "$user":"$user" /home/"$user"/.kube/config
 
-	chmod 600 /home/vagrant/.kube/config
-	echo 'export KUBECONFIG="/home/vagrant/.kube/config"' >> /home/vagrant/.bashrc
+	chmod 600 /home/"$user"/.kube/config
+	echo 'export KUBECONFIG="/home/'"$user"'/.kube/config"' >> /home/"$user"/.bashrc
 	echo "**********************************"
 }
 
@@ -105,6 +128,7 @@ helm_install_tink_stack() {
 	local version=$2
 	local interface=$3
 	local loadbalancer_ip=$4
+	local manifests_dir=$5
 
 	trusted_proxies=""
 	until [ "$trusted_proxies" != "" ]; do
@@ -118,7 +142,7 @@ helm_install_tink_stack() {
 		--set "smee.trustedProxies=${trusted_proxies}" \
 		--set "hegel.trustedProxies=${trusted_proxies}" \
 		--set "stack.kubevip.interface=${interface}" \
-		--values manifests/proxy-values.yaml \
+		--values ${manifests_dir}/proxy-values.yaml \
 		--set "stack.loadBalancerIP=${loadbalancer_ip}" \
 		--set "smee.publicIP=${loadbalancer_ip}"
 }
@@ -126,7 +150,6 @@ helm_install_tink_stack() {
 configure_dnsmasq() {
 	cat <<-EOF >/etc/dnsmasq.conf
 		dhcp-range=10.0.10.100,10.0.10.200,255.255.255.0,12h
-		#dhcp-option=option:router,172.31.0.1
 		dhcp-option=option:router,10.0.10.1
 		dhcp-option=option:dns-server,1.1.1.1
 		dhcp-authoritative
@@ -149,33 +172,45 @@ run_helm() {
 	local helm_chart_version=$3
 	local loadbalancer_interface=$4
 	local k3s_version=$5
+	local user=$6
 	local namespace="tink-system"
 
 	start_k3s "$k3s_version"
 	install_helm
 	kubectl get all --all-namespaces
-	kubectl_for_vagrant_user
-	helm_install_tink_stack "$namespace" "$helm_chart_version" "$loadbalancer_interface" "$loadbalancer_ip"
+	kubectl_for_user "$user"
+	helm_install_tink_stack "$namespace" "$helm_chart_version" "$loadbalancer_interface" "$loadbalancer_ip" "$manifests_dir"
 	apply_manifests "$manifests_dir" "$namespace"
 }
 
 main() {
 	local loadbalancer_ip="$1"
 	local manifests_dir="$2"
+	local is_physical="$3"
 	# https://github.com/tinkerbell/charts/pkgs/container/charts%2Fstack
 	local helm_chart_version="0.4.4"
-	local loadbalancer_interface="eth1"
 	local kubectl_version="1.28.3"
 	local k3s_version="v1.30.2-k3s1"
 
+  local loadbalancer_interface="eth1"
+  if [[ -n "$4" ]]; then
+    loadbalancer_interface="$4"
+  fi
+
 	update_apt
-	install_docker
-	configure_dnsmasq
-	# https://github.com/ipxe/ipxe/pull/863
-	# Needed after iPXE increased the default TCP window size to 2MB.
-	sudo ethtool -K eth1 tx off sg off tso off
+	prepare_system
+	# disable_network_offloads
+
+	local user="vagrant"
+	if [[ "$is_physical" == "true" ]]; then
+		user=$(whoami)
+	fi
+
+	install_docker "$user"
+	# configure_dnsmasq
+	# sudo ethtool -K eth1 tx off sg off tso off
 	install_kubectl "$kubectl_version"
-	run_helm "$manifests_dir" "$loadbalancer_ip" "$helm_chart_version" "$loadbalancer_interface" "$k3s_version"
+	run_helm "$manifests_dir" "$loadbalancer_ip" "$helm_chart_version" "$loadbalancer_interface" "$k3s_version" "$user"
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
@@ -185,3 +220,13 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
 	echo loadbalancer_ip="$1"
 	echo "all done!"
 fi
+
+# kubectl config set-context --current --namespace=tink-system
+# alias k='kubectl'
+
+# INTERFACE: nsenter -t1 -n ip route | awk '/default/ {print $5}' | head -n1
+# IP_LOAD_BALANCER: nsenter -t1 -n ip -4 addr show <INTERFACE> | awk '/inet / {print $2}' | cut -d/ -f1
+
+#             loadBalancerIP     | folder_manifests | is_physical | loadbalancer_interface
+# ./setup.sh "<IP_LOAD_BALANCER>"        "."             true         <INTERFACE>
+# ./setup.sh "192.168.1.5" "." true enp1s0
