@@ -48,7 +48,6 @@ curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_V
 export COLONY_API_KEY=$COLONY_API_KEY; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo kubectl -n tink-system get secret mgmt-kubeconfig; \
-/home/vagrant/manifests/helm-upgrade.sh /home/vagrant/manifests/proxy-values.yaml; \
 echo '------------------------------------'; \
 echo 'kubens tink-system'; \
 echo 'kubens tink-system' >> ~/.bashrc; \
@@ -62,12 +61,13 @@ echo '------------------------------------'; \
   sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
+  local branch="main"
 
   local fullCommand="$sshCommand -tt 'vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-libvirt; \
 curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
-git clone https://github.com/konstructio/colony-vagrant.git colony-vagrant; \
+git clone -b $branch https://github.com/konstructio/colony-vagrant.git colony-vagrant; \
 cd colony-vagrant; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \
 vagrant ssh laptop; exec /bin/bash -i'"
 
