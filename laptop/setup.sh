@@ -94,12 +94,12 @@ helm_install_tink_stack() {
 		--create-namespace \
 		--namespace "$namespace" \
 		--wait \
-		--set "smee.trustedProxies=${trusted_proxies}" \
-		--set "hegel.trustedProxies=${trusted_proxies}" \
-		--set "stack.kubevip.interface=${interface}" \
-		--values manifests/proxy-values.yaml \
-		--set "stack.loadBalancerIP=${loadbalancer_ip}" \
-		--set "smee.publicIP=${loadbalancer_ip}"
+		--values manifests/proxy-values.yaml
+	
+	kubectl -n tink-system patch clusterrole smee-role --type='json' -p='[
+		{"op": "add", "path": "/rules/0/verbs/-", "value": "create"},
+		{"op": "add", "path": "/rules/0/verbs/-", "value": "update"}
+	]'
 }
 
 configure_dnsmasq() {
