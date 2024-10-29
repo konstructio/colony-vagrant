@@ -15,7 +15,8 @@ if [ ! -f "$filename" ]; then
   exit 1
 fi
 
-helm upgrade tink-stack -n tink-system -f "$filename" oci://ghcr.io/tinkerbell/charts/stack
+# Fix: temporarily removed for incompatible helm version
+# helm upgrade tink-stack -n tink-system -f "$filename" oci://ghcr.io/tinkerbell/charts/stack
 
 kubectl -n tink-system patch clusterrole smee-role --type='json' -p='[
   {"op": "add", "path": "/rules/0/verbs/-", "value": "create"},
