@@ -61,7 +61,7 @@ echo '------------------------------------'; \
   sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
-  local branch="main"
+  local branch="fix/vagrant-version"
 
   local fullCommand="$sshCommand -tt 'vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-libvirt; \
 curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
