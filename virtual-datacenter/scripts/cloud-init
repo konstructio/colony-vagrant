@@ -12,7 +12,7 @@ sudo apt update && sudo apt install \
     libssl-dev \
     zlib1g-dev \
     liblzma-dev \
-    vagrant \
+    vagrant=2.4.1-1 \
     qemu-kvm \
     libvirt-daemon-system \
     libvirt-dev \
