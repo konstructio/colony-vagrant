@@ -34,20 +34,33 @@ ask_skip_data_collection() {
 }
 
 setup_vagrant() {
-  local colonyDownloadUrl="curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz"
+  local url="https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz"
+  local colonyDownloadUrl="curl -sLO $url"
 
   if [[ "$COLONY_CLI_VERSION" == untagged-* ]]; then
-    local colonyDownloadUrl="sudo apt install jq -y && ASSET_ID=\$(curl -s -H \"Authorization: token \$GITHUB_TOKEN\" -H \"Accept: application/vnd.github+json\" https://api.github.com/repos/konstructio/colony/releases | grep -A20 '\"tag_name\": \"v0.2.0-rc2\"' | grep -B10 '\"name\": \"colony_Linux_x86_64.tar.gz\"' | grep '\"id\":' | head -n 1 | sed 's/[^0-9]*//g') && curl -L -H \"Authorization: token \$GITHUB_TOKEN\" -H \"Accept: application/octet-stream\" -o colony_Linux_x86_64.tar.gz https://api.github.com/repos/konstructio/colony/releases/assets/\$ASSET_ID"
-  else
-    local colonyDownloadUrl="curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz"
+    echo -e "${YELLOW} -- Using GitHub API to download asset ${NOCOLOR}"
+    
+    colonyDownloadUrl="sudo apt install -y jq; \
+ASSET_ID=\$(curl -s -H \"Authorization: token $GITHUB_TOKEN\" -H \"Accept: application/vnd.github+json\" \
+https://api.github.com/repos/konstructio/colony/releases | \
+jq -r '.[] | select(.assets[]?.browser_download_url == \"$url\") | .assets[] | select(.browser_download_url == \"$url\") | .id'); \
+if [[ -n \"\$ASSET_ID\" ]]; then \
+curl -L -H \"Authorization: token \$GITHUB_TOKEN\" -H \"Accept: application/octet-stream\" -o colony_Linux_x86_64.tar.gz \
+https://api.github.com/repos/konstructio/colony/releases/assets/\$ASSET_ID; \
+else \
+echo \"Error: ASSET ID not foung. verify response API.\"; \
+fi"
   fi
 
-  local vagrantCommand="echo \\\"alias k=kubectl\\\" >> ~/.bashrc; \
-echo \\\"export COLONY_API_KEY=$COLONY_API_KEY\\\" >> ~/.bashrc; \
+  echo -e "${YELLOW} -- $colonyDownloadUrl ${NOCOLOR}"
+
+  # Define the commands for the Vagrant setup
+  local vagrantCommand="echo 'alias k=kubectl' >> ~/.bashrc; \
+echo 'export COLONY_API_KEY=$COLONY_API_KEY' >> ~/.bashrc; \
 source ~/.bashrc; \
 until systemctl is-active --quiet snapd.service; do sleep 1; done; \
 echo 'snapd.service is active and working.'; \
-until [ \\\"\\\$(snap changes | grep -e \\\"Done.*Initialize system state\\\" | wc -l)\\\" -gt 0 ]; do echo 'Waiting for snapd to be ready...'; sleep 5; done; \
+until [[ \$(snap changes | grep -e 'Done.*Initialize system state' | wc -l) -gt 0 ]]; do echo 'Waiting for snapd to be ready...'; sleep 5; done; \
 echo 'snapd is ready.'; \
 sudo snap install --classic kubectx; \
 kubens tink-system; \
@@ -62,16 +75,17 @@ echo 'kubens tink-system' >> ~/.bashrc; \
 echo 'watch kubectl get pods'; \
 echo 'kubectl get wf,tpl,hw'; \
 echo 'watch kubectl get workflow'; \
-echo '------------------------------------'; \
-"
+echo '------------------------------------';"
 
+  # Get SSH command using civo_get_ssh_command function
   local sshCommand
   sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
   local branch="feat/check-colony-0.2-compatibility"
 
-  local fullCommand="$sshCommand -tt 'if ! vagrant plugin list | grep -q vagrant-libvirt; then vagrant plugin install vagrant-libvirt; fi; \
+  # Full command to be executed remotely with correct quoting for embedded commands
+  local fullCommand="$sshCommand -tt 'vagrant plugin install vagrant-libvirt; \
 $colonyDownloadUrl && tar -xvf colony_Linux_x86_64.tar.gz; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
@@ -79,6 +93,7 @@ git clone -b $branch https://github.com/konstructio/colony-vagrant.git colony-va
 cd colony-vagrant; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \
 vagrant ssh laptop; exec /bin/bash -i'"
 
+  # Execute command with auto-approve flag
   execute_command "$fullCommand" "autoApprove"
 }
 
