@@ -34,6 +34,14 @@ ask_skip_data_collection() {
 }
 
 setup_vagrant() {
+  local colonyDownloadUrl="curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz"
+
+  if [[ "$COLONY_CLI_VERSION" == untagged-* ]]; then
+    local colonyDownloadUrl="sudo apt install jq -y && ASSET_ID=\$(curl -s -H \"Authorization: token \$GITHUB_TOKEN\" -H \"Accept: application/vnd.github+json\" https://api.github.com/repos/konstructio/colony/releases | grep -A20 '\"tag_name\": \"v0.2.0-rc2\"' | grep -B10 '\"name\": \"colony_Linux_x86_64.tar.gz\"' | grep '\"id\":' | head -n 1 | sed 's/[^0-9]*//g') && curl -L -H \"Authorization: token \$GITHUB_TOKEN\" -H \"Accept: application/octet-stream\" -o colony_Linux_x86_64.tar.gz https://api.github.com/repos/konstructio/colony/releases/assets/\$ASSET_ID"
+  else
+    local colonyDownloadUrl="curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz"
+  fi
+
   local vagrantCommand="echo \\\"alias k=kubectl\\\" >> ~/.bashrc; \
 echo \\\"export COLONY_API_KEY=$COLONY_API_KEY\\\" >> ~/.bashrc; \
 source ~/.bashrc; \
@@ -44,7 +52,7 @@ echo 'snapd is ready.'; \
 sudo snap install --classic kubectx; \
 kubens tink-system; \
 sudo kubectl -n tink-system create secret generic mgmt-kubeconfig --from-file=kubeconfig=\$HOME/.kube/config; \
-curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
+$colonyDownloadUrl && tar -xvf colony_Linux_x86_64.tar.gz; \
 export COLONY_API_KEY=$COLONY_API_KEY; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo kubectl -n tink-system get secret mgmt-kubeconfig; \
@@ -61,10 +69,10 @@ echo '------------------------------------'; \
   sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
-  local branch="main"
+  local branch="feat/check-colony-0.2-compatibility"
 
-  local fullCommand="$sshCommand -tt 'vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-libvirt; \
-curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
+  local fullCommand="$sshCommand -tt 'if ! vagrant plugin list | grep -q vagrant-libvirt; then vagrant plugin install vagrant-libvirt; fi; \
+$colonyDownloadUrl && tar -xvf colony_Linux_x86_64.tar.gz; \
 sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
 git clone -b $branch https://github.com/konstructio/colony-vagrant.git colony-vagrant; \
