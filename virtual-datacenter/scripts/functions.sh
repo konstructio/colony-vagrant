@@ -44,9 +44,7 @@ echo 'snapd is ready.'; \
 sudo snap install --classic kubectx; \
 kubens tink-system; \
 sudo kubectl -n tink-system create secret generic mgmt-kubeconfig --from-file=kubeconfig=\$HOME/.kube/config; \
-curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
 export COLONY_API_KEY=$COLONY_API_KEY; \
-sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo kubectl -n tink-system get secret mgmt-kubeconfig; \
 echo '------------------------------------'; \
 echo 'kubens tink-system'; \
@@ -61,11 +59,9 @@ echo '------------------------------------'; \
   sshCommand=$(civo_get_ssh_command)
 
   echo -e "${YELLOW}$sshCommand ${NOCOLOR}"
-  local branch="main"
+  local branch="jagrant"
 
   local fullCommand="$sshCommand -tt 'vagrant plugin list | grep -q vagrant-libvirt || vagrant plugin install vagrant-libvirt; \
-curl -sLO https://github.com/konstructio/colony/releases/download/${COLONY_CLI_VERSION}/colony_Linux_x86_64.tar.gz && tar -xvf colony_Linux_x86_64.tar.gz; \
-sudo install -m 0755 ./colony /usr/local/bin/; \
 sudo systemctl restart libvirtd; \
 git clone -b $branch https://github.com/konstructio/colony-vagrant.git colony-vagrant; \
 cd colony-vagrant; vagrant up spine01 leaf01 exit laptop; vagrant ssh laptop -c \"$vagrantCommand\"; \

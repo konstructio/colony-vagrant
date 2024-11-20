@@ -8,11 +8,6 @@ install_docker() {
 	gpasswd -a vagrant docker
 }
 
-install_kubectx_kubens() {
-	update_apt
-	apt-get install --no-install-recommends kubectx
-}
-
 install_kubectl() {
 	local kubectl_version=$1
 
@@ -45,61 +40,11 @@ update_apt() {
 	apt-get update
 }
 
-install_k3d() {
-	local k3d_Version=$1
-
-	wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | TAG="$k3d_version" bash
-}
-
-start_k3d() {
-    echo "Creating the cluster..."
-    k3d cluster create --network host --no-lb --k3s-arg "--disable=traefik,servicelb" --k3s-arg "--kube-apiserver-arg=feature-gates=MixedProtocolLBService=true" --host-pid-mode
-
-    echo "Waiting for the cluster to be fully operational..."
-    sleep 10
-
-    echo "Configuring kubeconfig..."
-    mkdir -p ~/.kube/
-
-    k3d kubeconfig get -a > ~/.kube/config || echo "Failed to get kubeconfig"
-
-    echo "Checking nodes..."
-    until kubectl wait --for=condition=Ready nodes --all --timeout=600s; do
-        echo "Waiting for nodes to be ready..."
-        sleep 5
-    done
-
-    echo "All nodes are ready."
-}
-
 kubectl_for_vagrant_user() {
 	runuser -l vagrant -c "mkdir -p ~/.kube/"
 	runuser -l vagrant -c "k3d kubeconfig get -a > ~/.kube/config"
 	chmod 600 /home/vagrant/.kube/config
-	echo 'export KUBECONFIG="/home/vagrant/.kube/config"' >> /home/vagrant/.bashrc
-}
-
-helm_install_tink_stack() {
-	local namespace=$1
-	local version=$2
-	local interface=$3
-	local loadbalancer_ip=$4
-
-	trusted_proxies=""
-	until [ "$trusted_proxies" != "" ]; do
-		trusted_proxies=$(kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}' | tr ' ' ',')
-	done
-	helm install tink-stack oci://ghcr.io/tinkerbell/charts/stack \
-		--version "$version" \
-		--create-namespace \
-		--namespace "$namespace" \
-		--wait \
-		--values manifests/proxy-values.yaml
-	
-	kubectl -n tink-system patch clusterrole smee-role --type='json' -p='[
-		{"op": "add", "path": "/rules/0/verbs/-", "value": "create"},
-		{"op": "add", "path": "/rules/0/verbs/-", "value": "update"}
-	]'
+	echo 'export KUBECONFIG="/home/vagrant/.colony/kubeconfig"' >> /home/vagrant/.bashrc
 }
 
 configure_dnsmasq() {
@@ -115,39 +60,17 @@ configure_dnsmasq() {
 	systemctl restart dnsmasq
 }
 
-apply_manifests() {
-	local manifests_dir=$1
-	local namespace=$2
+install_colony() {
+	# local colony_version=$1
 
-	kubectl apply -n "$namespace" -f "$manifests_dir"/ubuntu-download.yaml
-	kubectl apply -n "$namespace" -f "$manifests_dir"/talos-download.yaml
-}
-
-run_helm() {
-	local manifests_dir=$1
-	local loadbalancer_ip=$2
-	local helm_chart_version=$3
-	local loadbalancer_interface=$4
-	local k3d_version=$5
-	local namespace="tink-system"
-
-	install_k3d "$k3d_version"
-	start_k3d
-	install_helm
-	kubectl get all --all-namespaces
-	kubectl_for_vagrant_user
-	helm_install_tink_stack "$namespace" "$helm_chart_version" "$loadbalancer_interface" "$loadbalancer_ip"
-  	apply_manifests "$manifests_dir" "$namespace"
+	wget https://objectstore.nyc1.civo.com/konstruct-assets/colony/v0.2.0-rc4/colony_Linux_x86_64.tar.gz
+	tar xvf colony_Linux_x86_64.tar.gz
+	sudo mv colony /usr/local/bin
+	colony version
 }
 
 main() {
-	local loadbalancer_ip="$1"
-	local manifests_dir="$2"
-	# https://github.com/tinkerbell/charts/pkgs/container/charts%2Fstack
-	local helm_chart_version="0.4.4"
-	local loadbalancer_interface="eth1"
 	local kubectl_version="1.28.3"
-	local k3d_version="v5.6.0"
 
 	update_apt
 	install_docker
@@ -156,7 +79,8 @@ main() {
 	# Needed after iPXE increased the default TCP window size to 2MB.
 	sudo ethtool -K eth1 tx off sg off tso off
 	install_kubectl "$kubectl_version"
-	run_helm "$manifests_dir" "$loadbalancer_ip" "$helm_chart_version" "$loadbalancer_interface" "$k3d_version"
+	install_colony
+	kubectl_for_vagrant_user
 }
 
 if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
