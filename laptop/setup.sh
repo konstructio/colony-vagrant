@@ -42,8 +42,6 @@ update_apt() {
 
 kubectl_for_vagrant_user() {
 	runuser -l vagrant -c "mkdir -p ~/.kube/"
-	runuser -l vagrant -c "k3d kubeconfig get -a > ~/.kube/config"
-	chmod 600 /home/vagrant/.kube/config
 	echo 'export KUBECONFIG="/home/vagrant/.colony/kubeconfig"' >> /home/vagrant/.bashrc
 }
 
@@ -67,6 +65,7 @@ install_colony() {
 	tar xvf colony_Linux_x86_64.tar.gz
 	sudo mv colony /usr/local/bin
 	colony version
+	rm colony_Linux_x86_64.tar.gz README.md
 }
 
 main() {
